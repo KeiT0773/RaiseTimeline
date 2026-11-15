@@ -1,0 +1,86 @@
+name: 機能追加
+description: 新しい機能を実装する
+title: "feat: "
+labels: ["type:feat"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        機能を追加するときはこのテンプレートを使います。
+        作業を始める前に、機能一覧（docs/02_features.md）と、機能別要件書（docs/features/）の該当箇所を確認してください。
+
+  - type: dropdown
+    id: feature-id
+    attributes:
+      label: 関連する機能 ID
+      description: 機能一覧で定義された機能 ID を選びます。該当がなければ「該当なし（新規）」を選び、背景欄に理由を書いてください。
+      options:
+        - F-01 新規登録
+        - F-02 ログイン
+        - F-03 ログアウト
+        - F-04 アクセス制御
+        - F-05 タイムライン表示
+        - F-06 ページング
+        - F-07 件数表示
+        - F-08 投稿作成
+        - F-09 投稿詳細表示
+        - F-10 投稿削除
+        - F-11 コメント作成
+        - F-12 コメント一覧表示
+        - F-13 コメント削除
+        - F-14 いいね / 取り消し
+        - F-15 自分のいいね状態表示
+        - F-16 プロフィール表示
+        - F-17 画像添付・表示
+        - F-18 プロフィール編集
+        - F-19 フォロー / 解除
+        - F-20 フォロー数・フォロワー数表示
+        - F-21 タイムライン切り替え
+        - F-22 ユーザー検索
+        - F-23 おすすめユーザー
+        - 該当なし（新規）
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景・目的
+      description: なぜこの機能が必要なのか、何を解決するのかを書きます。
+      placeholder: |
+        例：フォローしたい相手を探す手段が無い。@ユーザー名で検索できるようにしたい。
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受け入れ基準
+      description: 「これができていれば完了」と言える条件を箇条書きで書きます。
+      value: |
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 影響範囲
+      description: 変更が及ぶ画面・API・テーブル・文書など、分かる範囲で書きます。
+      placeholder: |
+        例：SC-07 ユーザー検索画面、users テーブル、docs/features/user-search.md
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      options:
+        - 高
+        - 中
+        - 低
+      default: 1
+    validations:
+      required: true
