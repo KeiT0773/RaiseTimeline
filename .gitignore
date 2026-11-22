@@ -1,0 +1,12 @@
+# バックエンド・フロントエンドそれぞれの除外設定は backend/.gitignore、frontend/.gitignore にある。
+
+# 開発時に投稿画像・アイコンを保存するディレクトリ（技術スタック 3.）
+backend/storage/
+
+# JVM がメモリ不足などで異常終了したときに出すログ
+hs_err_pid*.log
+replay_pid*.log
+
+# OS が作るファイル
+.DS_Store
+Thumbs.db

@@ -5,22 +5,23 @@
 | 項目 | 内容 |
 | --- | --- |
 | 文書名 | RaiseTimeline 技術スタック |
-| 版数 | 1.0 |
+| 版数 | 2.0 |
 | 作成日 | 2026-11-15 |
-| 最終更新日 | 2026-11-15 |
-| ステータス | 作成中（版数は雛形の作成時に確定） |
+| 最終更新日 | 2026-11-22 |
+| ステータス | 作成中 |
 | 上位文書 | [要件定義書](01_requirements.md) |
 | 関連文書 | [機能一覧](02_features.md)、[画面設計](03_screens.md)、[ER図・テーブル定義](04_er_diagram.md)、[インフラ構成（案）](06_infra_design.md) |
 
 本書は、要件定義書のシステム構成で「技術スタックに定める」とした、各層で使用する技術（プログラミング言語、フレームワーク、データベース製品、周辺ツール）を定義する。
 
-各技術の版数は、先行プロジェクトの TaskManagement が雛形の作成時（2026-09〜10）に確定した版を **目安** として記す。実際の版数は本プロジェクトの雛形を作成した時点の最新の安定版で確定し、本書を更新する。
+各技術の版数は、本プロジェクトの雛形を作成した時点（2026-11-22）に導入した版を記す。バックエンドは `backend/build.gradle`、フロントエンドは `frontend/package.json` が正で、版を上げたら本書も更新する。
 
 ### 1.1 変更履歴
 
 | 版数 | 日付 | 変更内容 |
 | --- | --- | --- |
 | 1.0 | 2026-11-15 | 初版作成。TaskManagement と同じ React + Spring Boot + PostgreSQL の構成とし、本プロジェクトで新たに必要なもの（認証、画像の保存、画面の切り替え）を追加 |
+| 2.0 | 2026-11-22 | DB アクセスを Spring Data JPA から MyBatis に変更。雛形の作成に合わせて、各技術の版数を目安から導入した版に確定 |
 
 ---
 
@@ -39,6 +40,7 @@ TaskManagement と同じ技術を使い、同じ技術でより複雑なアプ�
 | --- | --- | --- | --- |
 | フロントエンド | React + Vite | Next.js | **React + Vite**（＋ React Router） |
 | バックエンド | Java + Spring Boot | Ruby on Rails（API モード） | **Java + Spring Boot**（＋ Spring Security） |
+| DB アクセス | Spring Data JPA | Active Record | **MyBatis**（SQL を XML に直接書く） |
 | データベース | PostgreSQL | MySQL | **PostgreSQL** |
 | 利用者の認証 | なし（個人用） | なし（チームで共有） | **あり**（ユーザー登録・ログイン） |
 | 画面の数 | 1（＋詳細の重ね表示） | 1（＋詳細の重ね表示） | **7**（URL で切り替え） |
@@ -52,18 +54,18 @@ TaskManagement と同じ技術を使い、同じ技術でより複雑なアプ�
 | 項目 | 選定 | 役割・選定理由 |
 | --- | --- | --- |
 | 言語 | Java 21（LTS） | 長期サポート版であり、教材・記事が最も多い。TaskManagement と同じ |
-| フレームワーク | Spring Boot（目安：4.1 系） | プロジェクト方針として指定。雛形は Spring Initializr で作成する |
-| ビルドツール | Gradle（Gradle Wrapper。目安：9.7 系） | ソースのコンパイル、依存ライブラリの取得、実行ファイルの作成を行う。Wrapper を同梱するため Gradle 本体のインストールは不要 |
+| フレームワーク | Spring Boot 4.1.3 | プロジェクト方針として指定。雛形は Spring Initializr で作成した。4.2 系が出ているが、MyBatis の Spring Boot 対応版（4.1.0）が 4.1 向けのため 4.1 系にそろえる |
+| ビルドツール | Gradle 9.9.2（Gradle Wrapper） | ソースのコンパイル、依存ライブラリの取得、実行ファイルの作成を行う。Wrapper を同梱するため Gradle 本体のインストールは不要 |
 | REST API | Spring Web | フロントエンドからの HTTP 要求を受け付け、JSON で応答する。画像のアップロードは `multipart/form-data` で受け取る（Spring Web の標準機能） |
-| 認証・認可 | **Spring Security** | セッション（Cookie）方式のログイン、パスワードのハッシュ化（BCrypt。`BCryptPasswordEncoder`）、CSRF 対策、未ログイン時のアクセス拒否（F-04）を担う。要件定義書 非機能要件の「セキュリティ」「認証」を、自作せずにフレームワークの標準機能で満たすため。Spring Boot のスターター（`spring-boot-starter-security`）で入る |
-| DB アクセス | Spring Data JPA | Java のクラスとテーブルを対応づけ、SQL を直接書かずに読み書きする。件数の集計やフォロー中タイムラインのように JPA の派生クエリで書きにくいものは、`@Query` で JPQL / SQL を書く（N+1 を避けるため。[ER図・テーブル定義](04_er_diagram.md) 3.） |
+| 認証・認可 | **Spring Security**（7.1 系） | セッション（Cookie）方式のログイン、パスワードのハッシュ化（BCrypt。`BCryptPasswordEncoder`）、CSRF 対策、未ログイン時のアクセス拒否（F-04）を担う。要件定義書 非機能要件の「セキュリティ」「認証」を、自作せずにフレームワークの標準機能で満たすため。Spring Boot のスターター（`spring-boot-starter-security`）で入る |
+| DB アクセス | **MyBatis**（`mybatis-spring-boot-starter` 4.1.0。MyBatis 3.5 系） | SQL を `src/main/resources/mapper/` の XML に直接書き、Java 側は `@Mapper` のインターフェースだけを置く。件数の集計・フォロー中タイムライン・ユーザー検索のように JOIN やサブクエリを使う SQL（[ER図・テーブル定義](04_er_diagram.md) 3.）をほぼそのまま書け、どの SQL が実行されるかがコードから読み取れるため。1 ページ分をまとめて取る SQL を書き、N+1 を避ける。パラメーターは `#{}`（プレースホルダ）で渡し、`${}`（文字列の埋め込み）は使わない（SQL インジェクション対策）。Spring Boot の BOM では版数が管理されないため `build.gradle` で指定する |
 | 入力チェック | Bean Validation | 「投稿は 0〜280 文字」「ユーザー名は英数字とアンダースコアで 3〜15 文字」などの検証をアノテーションで宣言する |
-| DB マイグレーション | Flyway（目安：12 系） | テーブル定義の変更を SQL ファイルとして履歴管理し、アプリ起動時に自動で DB へ反映する。Spring Boot 4 では `spring-boot-starter-flyway` と `flyway-database-postgresql` を依存に加える（TaskManagement で確認済み） |
+| DB マイグレーション | Flyway 12.4 | テーブル定義の変更を SQL ファイルとして履歴管理し、アプリ起動時に自動で DB へ反映する。Spring Boot 4 では `spring-boot-starter-flyway` と `flyway-database-postgresql` を依存に加える（TaskManagement で確認済み） |
 | 画像の保存（本番） | **AWS SDK for Java 2.x（S3）** | 投稿画像を S3 に保存・削除し、表示用の署名付き URL（期限つきの URL）を発行する。AWS の公式 SDK で、必要な S3 のモジュールだけを依存に加える |
 | 画像の保存（開発時） | ローカルのディスク（`backend/storage/`） | 開発時は AWS に接続せずに動かせるよう、保存先を設定（Spring のプロファイル）で切り替える。保存処理はインターフェースにし、ディスク用と S3 用の 2 つの実装を用意する |
 | 画像の処理 | 保留（8. No.1） | EXIF（位置情報など）の除去と、サムネイル（縮小版）の作成に使う。候補は Java 標準の `ImageIO` と、その上で動く Thumbnailator（縮小）・TwelveMonkeys ImageIO（WebP の読み込み） |
 | コード検査 | Checkstyle + javac `-Xlint:all -Werror` | TaskManagement と同じ構成。ルールファイルも TaskManagement の `backend/config/checkstyle/checkstyle.xml` を流用する。`./gradlew check` で実行される |
-| テスト | JUnit 5 + Spring Boot Test + Spring Security Test | Spring Boot に同梱。ログインが必要な API のテストには Spring Security Test（`@WithMockUser` など）を使う |
+| テスト | JUnit 5 + Spring Boot Test + Spring Security Test + MyBatis Spring Boot Test | Spring Boot に同梱（MyBatis のテスト用スターターは MyBatis の Mapper 単位のテスト用）。ログインが必要な API のテストには Spring Security Test（`@WithMockUser` など）を使う。テストは compose の PostgreSQL に接続して実行する |
 
 ---
 
@@ -71,15 +73,15 @@ TaskManagement と同じ技術を使い、同じ技術でより複雑なアプ�
 
 | 項目 | 選定 | 役割・選定理由 |
 | --- | --- | --- |
-| ライブラリ | React（目安：19 系） | プロジェクト方針として指定 |
-| 言語 | TypeScript（Vite の雛形に合わせる） | API がやり取りするデータ（投稿・ユーザー・コメント）の形を型として定義でき、バックエンドとの食い違いを早期に検出できる |
-| ビルド・開発サーバー | Vite（目安：8 系） | `react-ts` テンプレートで雛形を生成する。TaskManagement と同じ |
-| 画面の切り替え | **React Router（目安：7 系）** | 画面が 7 つあり、それぞれに URL がある（`/posts/:id`、`/users/:username`、`/search?q=` など。[画面設計](03_screens.md) 1.）。ブラウザの戻る・進む、URL の共有、再読み込みで同じ画面に戻ることを実現するため。React で最も標準的なルーター |
+| ライブラリ | React 19.3 | プロジェクト方針として指定 |
+| 言語 | TypeScript 7.0（Vite の雛形に合わせる） | API がやり取りするデータ（投稿・ユーザー・コメント）の形を型として定義でき、バックエンドとの食い違いを早期に検出できる |
+| ビルド・開発サーバー | Vite 8.3 | `react-ts` テンプレートで雛形を生成する。TaskManagement と同じ |
+| 画面の切り替え | **React Router 7.18** | 画面が 7 つあり、それぞれに URL がある（`/posts/:id`、`/users/:username`、`/search?q=` など。[画面設計](03_screens.md) 1.）。ブラウザの戻る・進む、URL の共有、再読み込みで同じ画面に戻ることを実現するため。React で最も標準的なルーター |
 | バックエンドへの接続（開発時） | Vite の開発サーバーのプロキシ | `/api` で始まる要求を `http://localhost:8080` へ転送する。画面と API が同じオリジンになるため、ログインの Cookie と CSRF のトークンをそのまま扱え、CORS の設定も不要。本番も同じオリジンで配信する（[インフラ構成（案）](06_infra_design.md)） |
 | サーバー通信 | fetch API（ブラウザ標準） | 追加ライブラリは入れない。画像の送信は `FormData` を使う |
 | スタイル | CSS（CSS Modules、Vite 同梱） | UI ライブラリや Tailwind CSS は使わない。TaskManagement と同じ |
 | コード検査・整形 | oxlint + Prettier 3 | Vite の雛形に同梱される oxlint をそのまま使い、整形に Prettier を追加する。設定は TaskManagement と同じ（`react/exhaustive-deps` を `error`、`--deny-warnings`）。`npm run check` で lint・整形・型検査・テストを一括実行する |
-| テスト | Vitest + React Testing Library | Vite と相性のよい標準的な組み合わせ。DOM の再現には jsdom を使う |
+| テスト | Vitest 5 + React Testing Library | Vite と相性のよい標準的な組み合わせ。DOM の再現には jsdom を使う |
 | パッケージ管理 | npm | Node.js に同梱 |
 
 ---
@@ -127,10 +129,10 @@ RaiseTimeline/
 ├── .github/       Issue・PR のテンプレート
 ├── docs/          要件定義書・設計書
 │   └── features/  機能別要件書
-├── backend/       Spring Boot アプリケーション（作成予定）
-├── frontend/      React アプリケーション（作成予定）
+├── backend/       Spring Boot アプリケーション
+├── frontend/      React アプリケーション
 ├── infra/         AWS の構成（作成するかは未定）
-└── compose.yaml   ローカル開発用の PostgreSQL（作成予定）
+└── compose.yaml   ローカル開発用の PostgreSQL
 ```
 
 ---

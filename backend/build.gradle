@@ -1,0 +1,71 @@
+plugins {
+	id 'java'
+	// コード規約のチェック（フロントエンドの oxlint に相当）。Gradle に同梱されており、追加のプラグイン取得は不要。
+	id 'checkstyle'
+	id 'org.springframework.boot' version '4.1.3'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.raisetimeline'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	// 要求 body の入力チェック（Bean Validation）。DB の制約と二重にかける。
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// 認証・認可（セッション方式のログイン、BCrypt、CSRF 対策、未ログイン時の 401）。技術スタック 3.
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// DB アクセス（MyBatis）。SQL は src/main/resources/mapper/ の XML に書く。技術スタック 3.
+	// Spring Boot の BOM では版数が管理されないため、ここで指定する。
+	// 4.1 系は Spring Boot 4.1 向け（Spring Initializr の対応範囲は 4.0 系までのため、手で追加している）。
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.1.0'
+
+	// テーブル定義の履歴管理（Flyway）。
+	// Spring Boot 4 では自動設定がモジュールに分かれており、
+	// flyway-core 単体ではなく starter を入れないと起動時のマイグレーションが実行されない。
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
+	// PostgreSQL 向けの Flyway 拡張。starter には含まれないため個別に追加する。
+	implementation 'org.flywaydb:flyway-database-postgresql'
+
+	// PostgreSQL の JDBC ドライバ。実行時のみ必要。
+	runtimeOnly 'org.postgresql:postgresql'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
+	testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:4.1.0'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+// --- コード検査（技術スタック 3.「コード検査」） ------------------------------
+// javac の警告をすべて有効にし（-Xlint:all）、警告があればコンパイルを失敗させる（-Werror）。
+// serial（Serializable なクラスに serialVersionUID が無い）だけは除外する。
+// 例外クラスは RuntimeException を継承するため形式上 Serializable になるが、直列化して保存・送信することは無いため。
+tasks.withType(JavaCompile).configureEach {
+	options.compilerArgs.addAll(['-Xlint:all', '-Xlint:-serial', '-Werror'])
+}
+
+// Checkstyle。ルールは config/checkstyle/checkstyle.xml（TaskManagement から流用）。
+// ./gradlew check（test を含む）で実行される。
+// 単体で実行するときは ./gradlew checkstyleMain checkstyleTest。結果は build/reports/checkstyle/ に出る。
+checkstyle {
+	toolVersion = '14.1.0'
+	configFile = file('config/checkstyle/checkstyle.xml')
+	maxWarnings = 0
+}

@@ -1,0 +1,38 @@
+# ローカル開発用の PostgreSQL。
+# PC に PostgreSQL を直接インストールせず、コンテナとして起動・破棄する
+# （技術スタック 5. データベース）。
+#
+#   起動: docker compose up -d
+#   停止: docker compose stop
+#   破棄: docker compose down        （データは volume に残る）
+#   全消し: docker compose down -v   （データも消える）
+#
+# ポート 5432 は TaskManagement の PostgreSQL と同じ。両方を同時には起動できないため、
+# もう一方が動いていたら止めてから起動する（スキル start-dev-servers）。
+# 使用中でもポートの割り当てを書き換えて逃げない（CLAUDE.md 6.）。
+
+services:
+  db:
+    image: postgres:16
+    container_name: raisetimeline-db
+    environment:
+      # ここで指定した値が、そのまま backend の接続設定
+      # （backend/src/main/resources/application.properties）と対応する。ローカル開発専用の値。
+      POSTGRES_DB: raisetimeline
+      POSTGRES_USER: raisetimeline
+      POSTGRES_PASSWORD: raisetimeline
+      TZ: Asia/Tokyo
+    ports:
+      - "5432:5432"
+    volumes:
+      # データの保存先。コンテナを作り直しても中身が残るようにする。
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # PostgreSQL が「接続を受け付けられる状態」になったかを判定する。
+      test: ["CMD-SHELL", "pg_isready -U raisetimeline -d raisetimeline"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db-data:

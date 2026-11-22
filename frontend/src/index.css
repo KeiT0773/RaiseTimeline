@@ -1,0 +1,14 @@
+/* 全画面に共通する最小限の基本スタイル。
+   画面ごとのスタイルは CSS Modules（*.module.css）に書く（技術スタック 4.）。
+   配色などは認証画面の Issue で mock/style.css から移す。 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  line-height: 1.5;
+}

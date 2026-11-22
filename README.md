@@ -8,7 +8,7 @@ X（旧 Twitter）のような、テキストを中心にしたタイムライ�
 
 Web アプリケーション開発の流れ（要件定義 → 設計 → 実装）を実践的に学ぶための学習用プロジェクトです。先行プロジェクトの [TaskManagement](https://github.com/KeiT0773/TASKMANAGEMENT)・[InquiryManagement](https://github.com/KeiT0773/InquiryManagement) で学んだ 3 層構成に加えて、ログイン（認証・認可）、多対多のリレーション（いいね・フォロー）、画像のアップロード、URL を持つ複数の画面を扱います。
 
-> **現在の状況**：要件定義の段階です。文書だけがあり、アプリのコード（`backend/`・`frontend/`）はまだありません。以下の「起動手順」と「使い方」は、完成時の想定を要件定義書・機能別要件書に基づいて書いています。
+> **現在の状況**：実装を始めた段階です。`backend/`・`frontend/`・`compose.yaml` の雛形と users テーブルがあり、画面はまだありません。以下の「使い方」は、完成時の想定を要件定義書・機能別要件書に基づいて書いています。
 
 **▶ アプリ操作動画**：完成後に掲載します。
 
@@ -16,7 +16,7 @@ Web アプリケーション開発の流れ（要件定義 → 設計 → 実装
 
 ## 起動手順
 
-> 実装後に使えるようになります（`backend/`・`frontend/`・`compose.yaml` は実装開始時に作成します）。
+> 現時点では、画面は「準備中」の表示だけです。ログイン・新規登録は次の実装で使えるようになります。
 
 必要なもの：[JDK 21](https://adoptium.net/)、[Node.js 24](https://nodejs.org/)、[Docker Desktop](https://www.docker.com/products/docker-desktop/)。PostgreSQL は PC に入れず、Docker のコンテナで動かします。
 
@@ -48,6 +48,18 @@ npm run dev
 ポートは Vite が 5173、Spring Boot が 8080、PostgreSQL が 5432 に固定です。使用中でも別のポートでは起動せず、使っているプロセスを止めてから起動し直してください。TaskManagement と同じポートのため、両方を同時には起動できません。
 
 開発時、投稿画像は S3 ではなく `backend/storage/` に保存されます。
+
+### 検査・テスト
+
+```bash
+# バックエンド：Checkstyle → コンパイル（警告はエラー）→ テスト。テストは PostgreSQL に接続するため、先に docker compose up -d
+cd backend
+./gradlew check
+
+# フロントエンド：lint → 整形 → 型検査 → テスト
+cd frontend
+npm run check
+```
 
 ## 使い方
 
@@ -161,9 +173,9 @@ flowchart LR
 
 | 層 | 技術 | ディレクトリ |
 | --- | --- | --- |
-| フロントエンド | React 19 / TypeScript / Vite / React Router / CSS Modules | `frontend/`（作成予定） |
-| バックエンド | Java 21 / Spring Boot（Spring Web・Spring Security・Spring Data JPA・Bean Validation）/ Flyway / Gradle | `backend/`（作成予定） |
-| データベース | PostgreSQL 16 | `compose.yaml`（ローカル。作成予定） |
+| フロントエンド | React 19 / TypeScript / Vite / React Router / CSS Modules | `frontend/` |
+| バックエンド | Java 21 / Spring Boot（Spring Web・Spring Security・Bean Validation）/ MyBatis / Flyway / Gradle | `backend/` |
+| データベース | PostgreSQL 16 | `compose.yaml`（ローカル） |
 | 画像の保存 | Amazon S3（AWS SDK for Java 2.x）。開発時はローカルのディスク | — |
 | テスト・検査 | フロントエンド：Vitest / React Testing Library / oxlint / Prettier<br>バックエンド：JUnit 5 / Spring Boot Test / Spring Security Test / Checkstyle | — |
 | インフラ | 未決定（案：AWS の ALB + EC2 + RDS + S3 / Terraform） | — |
@@ -281,9 +293,9 @@ RaiseTimeline/
 ├── docs/             要件定義書・設計書
 │   └── features/     機能別要件書（8 本）
 ├── mock/             HTML / CSS / JS だけの静的モック（index.html を開くだけで動く）
-├── backend/          Spring Boot アプリケーション（作成予定）
-├── frontend/         React アプリケーション（作成予定）
-├── compose.yaml      ローカル開発用の PostgreSQL（作成予定）
+├── backend/          Spring Boot アプリケーション
+├── frontend/         React アプリケーション
+├── compose.yaml      ローカル開発用の PostgreSQL
 ├── CLAUDE.md         Claude Code が従うルール
 ├── .editorconfig     エディタの共通設定
 └── .gitattributes    改行コードを LF に統一
