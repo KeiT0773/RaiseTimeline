@@ -12,6 +12,8 @@ Web アプリケーション開発の流れ（要件定義 → 設計 → 実装
 
 **▶ アプリ操作動画**：完成後に掲載します。
 
+**▶ 静的モック**：画面の流れは [mock/](mock/README.md) の `index.html` をブラウザで開くと試せます（HTML / CSS / JS のみ。ビルド・サーバー不要）。
+
 ## 起動手順
 
 > 実装後に使えるようになります（`backend/`・`frontend/`・`compose.yaml` は実装開始時に作成します）。
@@ -277,6 +279,7 @@ RaiseTimeline/
 ├── .github/          Issue・PR のテンプレート
 ├── docs/             要件定義書・設計書
 │   └── features/     機能別要件書（8 本）
+├── mock/             HTML / CSS / JS だけの静的モック（index.html を開くだけで動く）
 ├── backend/          Spring Boot アプリケーション（作成予定）
 ├── frontend/         React アプリケーション（作成予定）
 ├── compose.yaml      ローカル開発用の PostgreSQL（作成予定）
