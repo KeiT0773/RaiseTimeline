@@ -49,13 +49,15 @@ Docker Desktop が止まっていて DB を起動できないときは、スキ�
 
 ## 3. バックエンドのチェックリスト（Spring Boot の標準）
 
-- Controller は HTTP の変換だけ。業務処理とトランザクションは Service、SQL は Repository（派生クエリまたは `@Query`）
+- Controller は HTTP の変換だけ。業務処理とトランザクションは Service、SQL は MyBatis の Mapper（`@Mapper` のインターフェース＋ `src/main/resources/mapper/` の XML）
+- SQL のパラメーターは `#{}` で渡す。`${}`（文字列の埋め込み）は SQL インジェクションになるため使わない。並び順などでどうしても必要な場合は、許可した値だけを選ぶ処理を Service に書き、理由をコメントに残す
+- 一覧の件数・画像・いいね済みは 1 ページ分をまとめて取得する SQL にし、投稿ごとに Mapper を呼ぶ N+1 にしない（[ER図・テーブル定義](../../../docs/04_er_diagram.md) 3.）
 - Service はクラスに `@Transactional(readOnly = true)`、書き込みメソッドだけ `@Transactional` で上書き
 - 要求・応答は `record`。エンティティを直接返さない（`password_digest` などを応答に含めない）
 - Bean Validation は要求 record に付け、DB の制約（`CHECK` / `NOT NULL` / `UNIQUE`）と二重にかける。正規化（strip、空白 → `null`）は検証の **前** に済ませる
 - 権限の確認（削除は作成者本人だけ、プロフィール更新はログインユーザー自身だけ）は Service で行い、画面で隠すだけにしない
 - エラー応答は `ProblemDetail` に統一する
-- `application.properties`：`spring.jpa.hibernate.ddl-auto=none`、`spring.jpa.open-in-view=false`、`server.port` は書かない
+- `application.properties`：`server.port` は書かない。`mybatis.configuration.map-underscore-to-camel-case=true`（列名 `display_name` → `displayName`）
 - Flyway：適用済みの `V*.sql` は編集しない。定義変更は次の連番で追加
 - 画像の保存先は設定で切り替える（ローカルはディスク、本番は S3）。保存処理はインターフェースの裏に隠し、Service から保存先を意識しない
 - 投稿の削除で、DB の行と一緒に画像ファイル（S3 のオブジェクト）も消している

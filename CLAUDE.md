@@ -23,7 +23,7 @@ X（旧 Twitter）のようなテキスト中心のタイムライン型 SNS。�
 | [開発フロー](docs/07_development_workflow.md) | Issue・ブランチ・PR の運用ルール |
 | API 設計書・データ設計書・フロントエンド設計書 | 作成予定（基本設計） |
 
-構成は `docs/`（要件定義書・設計書）、`backend/`（Spring Boot。作成予定）、`frontend/`（React + Vite。作成予定）、`compose.yaml`（ローカル開発用 PostgreSQL。作成予定）。
+構成は `docs/`（要件定義書・設計書）、`backend/`（Spring Boot。DB アクセスは MyBatis）、`frontend/`（React + Vite）、`compose.yaml`（ローカル開発用 PostgreSQL）。
 
 ---
 
@@ -141,7 +141,7 @@ gh api /repos/KeiT0773/RaiseTimeline/rulesets  # invalid API endpoint エラー�
 
 ## 4. ローカル環境
 
-雛形の作成後に次の手順で起動する（[技術スタック](docs/05_tech_stack.md) 6.）。
+次の手順で起動する（[技術スタック](docs/05_tech_stack.md) 6.）。
 
 ```bash
 # 1. データベース（リポジトリルートで実行）
