@@ -5,9 +5,9 @@
 | 項目 | 内容 |
 | --- | --- |
 | 文書名 | RaiseTimeline ER図・テーブル定義 |
-| 版数 | 2.0 |
+| 版数 | 2.1 |
 | 作成日 | 2026-11-14 |
-| 最終更新日 | 2026-11-15 |
+| 最終更新日 | 2026-11-22 |
 | ステータス | 作成中 |
 | 上位文書 | [要件定義書](01_requirements.md) |
 | 関連文書 | [機能一覧](02_features.md)、[機能別要件書](features/)、[技術スタック](05_tech_stack.md) |
@@ -22,6 +22,7 @@
 | 1.1 | 2026-11-14 | follows を MVP の ER図に追加。users.bio を VARCHAR(160) に変更 |
 | 1.2 | 2026-11-14 | 本文を VARCHAR(280) に変更。post_images を追加 |
 | 2.0 | 2026-11-15 | 文書情報を追加。PostgreSQL 向けに変更（日時を TIMESTAMPTZ、ユーザー名の一意性を大文字と小文字を区別しない式インデックスに）。一覧の続きの取得をキーセット方式に変更。ユーザー検索・おすすめユーザーの SQL と索引の方針（3.5）を追加 |
+| 2.1 | 2026-11-22 | users に avatar_path を追加。一覧・プロフィール・検索の SQL でアイコンを取得 |
 
 ## 1. ER図（MVP）
 
@@ -43,6 +44,7 @@ erDiagram
         string   email           UK
         string   password_digest    "ハッシュ化済みパスワード"
         string   bio                "自己紹介（0〜160文字・NULL可）"
+        string   avatar_path        "アイコン画像の保存先（NULL可）"
         timestamptz created_at
         timestamptz updated_at
     }
@@ -112,6 +114,7 @@ erDiagram
 | email | VARCHAR(255) | NO | | UNIQUE | ログイン用。小文字にそろえて保存する |
 | password_digest | VARCHAR(255) | NO | | | BCrypt でハッシュ化した値 |
 | bio | VARCHAR(160) | YES | NULL | | 自己紹介（0〜160 文字。空文字で保存された場合は NULL に揃える） |
+| avatar_path | VARCHAR(255) | YES | NULL | | アイコン画像のストレージ上の保存先（S3 のキー。開発時は `backend/storage/` からの相対パス）。NULL は未設定（画面では頭文字アイコンを表示する） |
 | created_at | TIMESTAMPTZ | NO | 現在時刻（`now()`） | | |
 | updated_at | TIMESTAMPTZ | NO | 現在時刻（`now()`） | | |
 
@@ -213,6 +216,7 @@ SELECT
   p.created_at,
   u.username,
   u.display_name,
+  u.avatar_path,
   (SELECT COUNT(*) FROM likes    l WHERE l.post_id = p.id) AS likes_count,
   (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comments_count,
   EXISTS (
@@ -261,6 +265,7 @@ SELECT
   u.id,
   u.username,
   u.display_name,
+  u.avatar_path,
   u.bio,
   u.created_at,
   (SELECT COUNT(*) FROM posts   p WHERE p.user_id     = u.id) AS posts_count,
@@ -289,6 +294,7 @@ SELECT
   u.id,
   u.username,
   u.display_name,
+  u.avatar_path,
   u.bio,
   (SELECT COUNT(*) FROM follows f WHERE f.followed_id = u.id) AS followers_count,
   EXISTS (SELECT 1 FROM follows f2
@@ -320,6 +326,7 @@ SELECT
   u.id,
   u.username,
   u.display_name,
+  u.avatar_path,
   u.bio,
   (SELECT COUNT(*) FROM follows f WHERE f.followed_id = u.id) AS followers_count,
   EXISTS (SELECT 1 FROM follows f3

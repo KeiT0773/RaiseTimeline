@@ -24,6 +24,8 @@
   const BIO_MAX = 160;
   const SEARCH_MAX = 50;
   const IMAGE_MAX_COUNT = 4;
+  const AVATAR_PX = 400; // アイコンは正方形に切り抜いてこの大きさに縮小する
+  const SCHEMA_VERSION = 2; // 2 = アイコン（users[].avatar）を追加
   const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
   const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
   const RECOMMEND_MAX = 10;
@@ -153,6 +155,7 @@
       bio,
       createdAt: now - daysAgo * DAY,
     }));
+    applySeedAvatars(users);
     const uid = (name) => users.find((u) => u.username === name).id;
 
     // フォロー関係（taro = デモ用アカウント）
@@ -279,7 +282,32 @@
       likes,
       follows,
       nextId: { user: users.length + 1, post: posts.length + 1, comment: comments.length + 1 },
+      schema: SCHEMA_VERSION,
     };
+  }
+
+  /** ダミーのアイコン画像（人のシルエット）を作る */
+  function dummyAvatar(hue) {
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">` +
+      `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
+      `<stop offset="0" stop-color="hsl(${hue},75%,70%)"/><stop offset="1" stop-color="hsl(${(hue + 40) % 360},70%,48%)"/>` +
+      `</linearGradient></defs>` +
+      `<rect width="400" height="400" fill="url(#g)"/>` +
+      `<circle cx="200" cy="160" r="72" fill="rgba(255,255,255,0.9)"/>` +
+      `<ellipse cx="200" cy="370" rx="130" ry="110" fill="rgba(255,255,255,0.9)"/>` +
+      `</svg>`;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+
+  /** 初期データのうち、アイコンを設定済みにしておくユーザー（残りは頭文字アイコン） */
+  const SEED_AVATARS = { hanako: 330, han: 200, Hana_dev: 270, sakura: 350, jiro: 30, sora: 180 };
+
+  function applySeedAvatars(users) {
+    for (const user of users) {
+      if (user.avatar === undefined) user.avatar = null;
+      if (SEED_AVATARS[user.username] !== undefined && !user.avatar) user.avatar = dummyAvatar(SEED_AVATARS[user.username]);
+    }
   }
 
   // =========================================================================
@@ -292,7 +320,16 @@
   function loadDb() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if ((data.schema || 1) < SCHEMA_VERSION) {
+          // 版 1（アイコンなし）で保存されたデータに、初期データのアイコンを足す
+          applySeedAvatars(data.users);
+          data.schema = SCHEMA_VERSION;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+        return data;
+      }
     } catch (e) {
       /* 読めないときは初期データで動かす */
     }
@@ -474,7 +511,8 @@
           { class: "header-me" },
           h(
             "a",
-            { href: `#/users/${encodeURIComponent(user.username)}`, title: "自分のプロフィール" },
+            { class: "header-me-link", href: `#/users/${encodeURIComponent(user.username)}`, title: "自分のプロフィール" },
+            avatar(user, 28),
             h("span", { class: "name" }, user.displayName),
             " ",
             h("span", { class: "handle muted" }, "@" + user.username)
@@ -494,6 +532,40 @@
           )
         )
       )
+    );
+  }
+
+  /** 頭文字アイコンの背景色。ユーザー ID から決めるので、表示名を変えても変わらない */
+  function avatarColor(userId) {
+    return `hsl(${(userId * 137) % 360}, 55%, 45%)`;
+  }
+
+  /**
+   * アイコン（丸）。画像が無ければ表示名の頭文字を表示する。
+   * src を渡すとその画像で表示する（プロフィール編集のプレビュー用。null なら頭文字）。
+   */
+  function avatar(user, size, src) {
+    const image = src === undefined ? user.avatar : src;
+    const style = `width:${size}px;height:${size}px;font-size:${Math.round(size * 0.45)}px;background:${image ? "transparent" : avatarColor(user.id)}`;
+    if (image) {
+      return h("img", { class: "avatar", src: image, alt: "", style, loading: "lazy" });
+    }
+    const initial = Array.from(user.displayName.trim())[0] || "?";
+    return h("span", { class: "avatar avatar-initial", style, "aria-hidden": "true" }, initial.toUpperCase());
+  }
+
+  /** アイコンのリンク（クリックでプロフィールへ。名前のリンクと同じ行き先なのでキーボード操作の対象からは外す） */
+  function avatarLink(user, size) {
+    return h(
+      "a",
+      {
+        class: "avatar-link",
+        href: `#/users/${encodeURIComponent(user.username)}`,
+        tabindex: "-1",
+        "aria-hidden": "true",
+        onClick: (e) => e.stopPropagation(),
+      },
+      avatar(user, size)
     );
   }
 
@@ -633,12 +705,12 @@
       h("span", { "data-comment-count": post.id }, String(commentCount(post.id)))
     );
 
-    const card = h(
-      "article",
-      { class: "post" + (detail ? " detail" : "") },
+    let card; // 削除ボタンから参照する
+    const contents = [
       h(
         "div",
         { class: "post-head" },
+        detail ? avatarLink(author, 48) : null,
         userLink(author),
         detail ? null : h("span", { class: "post-time" }, "・ " + relTime(post.createdAt)),
         h("span", { class: "spacer" }),
@@ -666,8 +738,13 @@
       post.content ? h("p", { class: "post-body" }, post.content) : null,
       mediaGrid(post, detail),
       detail ? h("div", { class: "post-abs-time" }, absTime(post.createdAt)) : null,
-      h("div", { class: "post-actions" }, commentLink, likeButton(post))
-    );
+      h("div", { class: "post-actions" }, commentLink, likeButton(post)),
+    ];
+
+    // 一覧ではアイコンを左の列に、詳細では名前の左に置く
+    card = detail
+      ? h("article", { class: "post detail" }, contents)
+      : h("article", { class: "post with-avatar" }, avatarLink(author, 40), h("div", { class: "post-main" }, contents));
 
     if (!detail) {
       // 本文部分のクリックで投稿詳細へ（名前・ボタン・画像は除く）
@@ -879,6 +956,7 @@
             email,
             password: v("password"),
             bio: "",
+            avatar: null,
             createdAt: Date.now(),
           };
           db.users.push(user);
@@ -1129,7 +1207,18 @@
       const author = userById(c.userId);
       return h(
         "div",
-        { class: "comment" },
+        { class: "comment with-avatar" },
+        avatarLink(author, 32),
+        h(
+          "div",
+          { class: "post-main" },
+          commentHead(c, author),
+          h("p", { class: "post-body" }, c.content)
+        )
+      );
+    };
+
+    const commentHead = (c, author) =>
         h(
           "div",
           { class: "post-head" },
@@ -1155,10 +1244,7 @@
                 "削除"
               )
             : null
-        ),
-        h("p", { class: "post-body" }, c.content)
-      );
-    };
+        );
 
     textarea.addEventListener("input", () => {
       const n = len(textarea.value.trim());
@@ -1228,6 +1314,7 @@
         h(
           "div",
           { class: "profile-head" },
+          h("div", { class: "profile-avatar" }, avatar(user, 96)),
           h(
             "div",
             { class: "names" },
@@ -1278,6 +1365,47 @@
     const bioCount = counter(BIO_MAX);
     const save = h("button", { type: "submit", class: "btn btn-primary" }, "保存する");
 
+    // アイコン：選んだ画像・削除はプレビューにだけ反映し、[保存する] で確定する
+    let pendingAvatar = user.avatar || null;
+    const avatarPreview = h("div", { class: "avatar-preview" });
+    const avatarErr = h("p", { class: "error", id: "err-avatar", role: "alert" });
+    const avatarFile = h("input", { type: "file", accept: IMAGE_TYPES.join(","), hidden: true });
+    const chooseBtn = h("button", { type: "button", class: "btn btn-outline", onClick: () => avatarFile.click() }, "画像を選択");
+    const removeBtn = h(
+      "button",
+      {
+        type: "button",
+        class: "btn btn-danger-text",
+        onClick: () => {
+          pendingAvatar = null;
+          avatarErr.textContent = "";
+          paintAvatar();
+        },
+      },
+      "アイコンを削除"
+    );
+    const paintAvatar = () => {
+      // 頭文字は入力中の表示名から作る
+      const preview = { id: user.id, displayName: nameInput.value.trim() || user.displayName };
+      avatarPreview.replaceChildren(avatar(preview, 96, pendingAvatar));
+      removeBtn.hidden = !pendingAvatar;
+    };
+    avatarFile.addEventListener("change", async () => {
+      const file = avatarFile.files[0];
+      avatarFile.value = "";
+      if (!file) return;
+      avatarErr.textContent = "";
+      if (!IMAGE_TYPES.includes(file.type)) return (avatarErr.textContent = "JPEG・PNG・GIF・WebP の画像を選択してください");
+      if (file.size > IMAGE_MAX_BYTES) return (avatarErr.textContent = "5MB 以下の画像を選択してください");
+      try {
+        pendingAvatar = await squareImage(file);
+        paintAvatar();
+      } catch (e) {
+        avatarErr.textContent = "JPEG・PNG・GIF・WebP の画像を選択してください";
+      }
+    });
+    nameInput.addEventListener("input", paintAvatar);
+
     const refresh = () => {
       const n = len(bioInput.value.trim());
       bioCount.update(n);
@@ -1311,11 +1439,19 @@
             // 更新対象は常にログイン中の利用者自身
             user.displayName = displayName;
             user.bio = bio; // 空なら「未設定」扱い（プロフィールで行ごと非表示）
+            user.avatar = pendingAvatar; // null なら頭文字アイコン
             saveDb();
             flash("プロフィールを更新しました");
             backToProfile();
           },
         },
+        h(
+          "div",
+          { class: "field" },
+          h("label", null, "アイコン"),
+          h("div", { class: "avatar-edit" }, avatarPreview, chooseBtn, removeBtn, avatarFile),
+          avatarErr
+        ),
         h(
           "div",
           { class: "field" },
@@ -1340,7 +1476,32 @@
       )
     );
     refresh();
+    paintAvatar();
     nameInput.focus();
+  }
+
+  /** 画像の中央を正方形に切り抜き、AVATAR_PX 四方に縮小して data URL にする */
+  function squareImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = reject;
+        img.onload = () => {
+          const side = Math.min(img.width, img.height);
+          const canvas = document.createElement("canvas");
+          canvas.width = canvas.height = Math.min(AVATAR_PX, side);
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.85));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   // =========================================================================
@@ -1385,6 +1546,7 @@
           go(`#/users/${encodeURIComponent(user.username)}`);
         },
       },
+      avatarLink(user, 40),
       h(
         "div",
         { class: "info" },
