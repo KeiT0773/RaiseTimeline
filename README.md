@@ -118,7 +118,7 @@ npm run check
 | --- | --- | --- |
 | F-01 | 新規登録 | ユーザー名・表示名・メール・パスワードでアカウントを作り、そのままログインする |
 | F-02 | ログイン | メールアドレスとパスワードでログインする |
-| F-03 | ログアウト | ログイン状態を破棄してログイン画面へ戻る |
+| F-03 | ログアウト | トークンを無効にしてログイン画面へ戻る |
 | F-04 | アクセス制御 | 未ログインのときはログイン画面へ移す |
 | F-05 | タイムライン表示 | 「すべて」タブで全ユーザーの投稿を新しい順に表示する |
 | F-06 | ページング | 20 件ずつ表示し、[さらに読み込む] で続きを表示する |
@@ -203,14 +203,60 @@ flowchart LR
 
 ブラウザは画面も API も Vite の開発サーバー（5173）から受け取り、`/api/*` は Vite が Spring Boot へ転送します。画面と API が同じオリジンになるため、ログインの Cookie と CSRF の対策をそのまま使えます。
 
+### ログインの仕組み
+
+ログイン状態はサーバーのセッションではなく、2 つのトークンで持ちます（[auth](docs/features/auth.md) 3.、[API 設計書](docs/08_api_design.md) 2.2）。
+
+| トークン | 中身 | 有効期限 | 保存場所 |
+| --- | --- | --- | --- |
+| アクセストークン | JWT（署名付き。ユーザー ID と期限が入っている） | 15 分 | HttpOnly の Cookie（`access_token`）。サーバーには保存しない |
+| リフレッシュトークン | ランダムな値 | 14 日（使うたびに延びる） | HttpOnly の Cookie（`refresh_token`）。サーバーの DB にはハッシュで保存 |
+
+アクセストークンの期限が切れると API は 401 を返し、画面はリフレッシュトークンで新しいトークンを受け取ってから操作を続けます。ログアウトするとリフレッシュトークンが無効になります。
+
+JWT の署名に使う秘密鍵は、ローカル開発では `application.properties` の値を使い、本番では環境変数 `APP_AUTH_JWT_SECRET` で差し替えます。
+
+#### curl で認証の API を試す
+
+画面ができる前に API だけを確かめる手順です（Git Bash。バックエンドを起動しておく）。Cookie は `jar.txt` に保存し、状態を変える要求には CSRF のトークン（`XSRF-TOKEN` の Cookie の値）を `X-XSRF-TOKEN` ヘッダーで付けます（[API 設計書](docs/08_api_design.md) 2.3）。
+
+```bash
+B=http://localhost:8080
+xsrf() { awk '$6=="XSRF-TOKEN"{v=$7} END{print v}' jar.txt; }
+
+# 1. 未ログインで /me を呼ぶ → 401。同時に CSRF のトークン（XSRF-TOKEN）を受け取る
+curl -i -c jar.txt -b jar.txt $B/api/auth/me
+
+# 2. 新規登録 → 201。access_token・refresh_token の Cookie が発行される
+#    日本語を含む JSON は、コマンドに直接書くと文字化けして 400 になるため、UTF-8 のファイルにして送る
+printf '%s' '{"username":"hanako","displayName":"山田花子","email":"hanako@example.com","password":"password123","passwordConfirmation":"password123"}' > signup.json
+curl -i -c jar.txt -b jar.txt -X POST -H 'Content-Type: application/json' -H "X-XSRF-TOKEN: $(xsrf)" --data-binary @signup.json $B/api/auth/signup
+
+# 3. ログイン中の利用者 → 200
+curl -c jar.txt -b jar.txt $B/api/auth/me
+
+# 4. トークンの更新 → 204（2 つの Cookie が新しくなる）
+curl -i -c jar.txt -b jar.txt -X POST -H "X-XSRF-TOKEN: $(xsrf)" $B/api/auth/refresh
+
+# 5. ログアウト → 204。そのあと /me は 401
+curl -i -c jar.txt -b jar.txt -X POST -H "X-XSRF-TOKEN: $(xsrf)" $B/api/auth/logout
+curl -i -c jar.txt -b jar.txt $B/api/auth/me
+
+# 6. ログイン → 200
+curl -i -c jar.txt -b jar.txt -X POST -H 'Content-Type: application/json' -H "X-XSRF-TOKEN: $(xsrf)" -d '{"email":"hanako@example.com","password":"password123"}' $B/api/auth/login
+```
+
+試したあとは `jar.txt`・`signup.json` を削除し、作ったユーザーを消しておきます（`docker compose exec db psql -U raisetimeline -d raisetimeline -c "DELETE FROM users WHERE email = 'hanako@example.com';"`）。
+
 ### API（案）
 
-正式な定義は API 設計書（作成予定）で行います。
+正式な定義は [API 設計書](docs/08_api_design.md) で行います（現在は認証の API のみ）。
 
 | メソッド | パス | 内容 |
 | --- | --- | --- |
 | POST | `/api/auth/signup` | ユーザー登録（そのままログイン） |
 | POST | `/api/auth/login` | ログイン |
+| POST | `/api/auth/refresh` | トークンの更新（アクセストークンの期限切れ時） |
 | POST | `/api/auth/logout` | ログアウト |
 | GET | `/api/auth/me` | ログイン中のユーザーの情報 |
 | GET | `/api/posts?tab=all\|following` | タイムライン（20 件） |
@@ -352,7 +398,8 @@ HTTPS の実現方法（独自ドメインを取るか、ALB の前に CloudFron
 | [技術スタック](docs/05_tech_stack.md) | 各層の技術の選定と理由、開発環境、ポート |
 | [インフラ構成（案）](docs/06_infra_design.md) | AWS 上に構築する場合の構成案と保留事項 |
 | [開発フロー](docs/07_development_workflow.md) | Issue・ブランチ・PR の運用ルール |
-| API 設計書・データ設計書・フロントエンド設計書 | 作成予定（基本設計） |
+| [API 設計書](docs/08_api_design.md) | API の共通規約（認証の Cookie・CSRF・エラー形式）と各 API の要求・応答（現在は認証のみ） |
+| データ設計書・フロントエンド設計書 | 作成予定（基本設計） |
 
 ### 機能別要件書
 

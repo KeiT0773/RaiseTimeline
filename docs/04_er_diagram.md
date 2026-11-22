@@ -5,7 +5,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 文書名 | RaiseTimeline ER図・テーブル定義 |
-| 版数 | 2.2 |
+| 版数 | 3.0 |
 | 作成日 | 2026-11-14 |
 | 最終更新日 | 2026-11-22 |
 | ステータス | 作成中 |
@@ -24,6 +24,7 @@
 | 2.0 | 2026-11-15 | 文書情報を追加。PostgreSQL 向けに変更（日時を TIMESTAMPTZ、ユーザー名の一意性を大文字と小文字を区別しない式インデックスに）。一覧の続きの取得をキーセット方式に変更。ユーザー検索・おすすめユーザーの SQL と索引の方針（3.5）を追加 |
 | 2.1 | 2026-11-22 | users に avatar_path を追加。一覧・プロフィール・検索の SQL でアイコンを取得 |
 | 2.2 | 2026-11-22 | DB アクセスを MyBatis に変更したことに合わせ、投稿削除時の画像ファイルの削除を「ORM のコールバック」から「Service の削除処理」に変更 |
+| 3.0 | 2026-11-22 | ログイン状態を JWT で持つ方式に変更したことに合わせ、リフレッシュトークンを保存する refresh_tokens を追加 |
 
 ## 1. ER図（MVP）
 
@@ -37,6 +38,7 @@ erDiagram
     posts ||--o{ post_images : "添付する"
     users ||--o{ follows  : "フォローする（follower_id）"
     users ||--o{ follows  : "フォローされる（followed_id）"
+    users ||--o{ refresh_tokens : "ログイン中の端末ごとに持つ"
 
     users {
         bigint   id              PK
@@ -90,6 +92,14 @@ erDiagram
         bigint   followed_id FK "フォローされる人"
         timestamptz created_at
     }
+
+    refresh_tokens {
+        bigint   id          PK
+        bigint   user_id     FK "トークンの持ち主"
+        string   token_hash  UK "トークンの SHA-256（16進）"
+        timestamptz expires_at  "有効期限（発行から 14 日）"
+        timestamptz created_at
+    }
 ```
 
 ### リレーションの読み方
@@ -102,6 +112,7 @@ erDiagram
 - **users と users の「フォロー」= 多 : 多（自己参照）** … `follows` が中間テーブル。同じ `users` テーブルを `follower_id`（フォローする人）と `followed_id`（フォローされる人）の 2 本の外部キーで参照する。
   - A さんのフォロー数 = `follower_id = A` の行数
   - A さんのフォロワー数 = `followed_id = A` の行数
+- **users : refresh_tokens = 1 : 多** … ログイン状態を保つためのリフレッシュトークン（[auth](features/auth.md) 3.）。ログインするたびに 1 行でき、ブラウザ（端末）ごとに別の行になる。更新すると行を作り直し、ログアウトすると行を削除する。
 
 ## 2. テーブル定義
 
@@ -124,6 +135,22 @@ erDiagram
 制約：`CHECK (username ~ '^[A-Za-z0-9_]{3,15}$')` ※ユーザー名の形式。アプリ側の検証と二重にかける
 
 > ユーザー検索（F-22）の部分一致は、MVP では索引を付けない（3.5）。
+
+### refresh_tokens（リフレッシュトークン）
+
+| カラム | 型 | NULL | デフォルト | 制約 | 説明 |
+| --- | --- | --- | --- | --- | --- |
+| id | BIGINT | NO | 自動採番 | PK | |
+| user_id | BIGINT | NO | | FK → users.id（ON DELETE CASCADE） | トークンの持ち主 |
+| token_hash | CHAR(64) | NO | | UNIQUE | トークンの値の SHA-256（16 進 64 文字）。値そのものは保存しない（DB の中身が漏れてもトークンとして使えないようにする） |
+| expires_at | TIMESTAMPTZ | NO | | | 有効期限。発行（更新）から 14 日後 |
+| created_at | TIMESTAMPTZ | NO | 現在時刻（`now()`） | | |
+
+インデックス：**`UNIQUE (token_hash)`** ※更新・ログアウトのときにトークンから行を探す、`(user_id)` ※ログイン時に、そのユーザーの期限切れの行を削除する
+
+> アクセストークン（JWT）は DB に保存しない。署名と有効期限（15 分）だけで確かめる。
+>
+> 更新（`POST /api/auth/refresh`）では、使ったトークンの行を削除して新しい行を作る（同じリフレッシュトークンは 2 回使えない）。期限切れの行は、そのユーザーが次にログインしたときに削除する。
 
 ### posts（投稿）
 
