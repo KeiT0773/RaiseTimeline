@@ -1,0 +1,913 @@
+/* RaiseTimeline モック 共通スタイル */
+
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --text: #0f1419;
+  --muted: #536471;
+  --border: #e1e6ea;
+  --primary: #1d9bf0;
+  --primary-hover: #1a8cd8;
+  --danger: #e0245e;
+  --like: #f91880;
+  --success-bg: #e8f7ee;
+  --success-text: #146c2e;
+  --error-bg: #fdecef;
+  --error-text: #b3123f;
+  --hover: #f7f9f9;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0f14;
+    --surface: #15202b;
+    --text: #e7e9ea;
+    --muted: #8b98a5;
+    --border: #2f3b47;
+    --primary: #1d9bf0;
+    --primary-hover: #4cb0f5;
+    --hover: #1c2a38;
+    --success-bg: #0f2e1d;
+    --success-text: #7ee2a8;
+    --error-bg: #3a1220;
+    --error-text: #ff8fb0;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- 共通ヘッダー ---------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 18px;
+  text-decoration: none;
+  color: var(--primary);
+}
+
+.header-search {
+  text-decoration: none;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.header-search:hover {
+  color: var(--primary);
+}
+
+.header-me {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.header-me a {
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-me a:hover .name {
+  text-decoration: underline;
+}
+
+/* ---------- レイアウト ---------- */
+
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  min-height: 60vh;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.site-footer {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 0 0 4px;
+}
+
+.section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.back-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ---------- フラッシュ ---------- */
+
+.flash {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  max-width: calc(100% - 32px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--success-bg);
+  color: var(--success-text);
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.15);
+}
+
+.flash.error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+/* ---------- ボタン ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-primary:not(:disabled):hover {
+  background: var(--primary-hover);
+}
+
+.btn-outline {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.btn-outline:not(:disabled):hover {
+  background: var(--hover);
+}
+
+.btn-dark {
+  background: var(--text);
+  color: var(--surface);
+}
+
+.btn-block {
+  width: 100%;
+  padding: 10px 16px;
+}
+
+.btn-link {
+  border: none;
+  padding: 0;
+  font-weight: 400;
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.btn-danger-text {
+  border: none;
+  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--danger);
+}
+
+.btn-danger-text:hover {
+  background: var(--error-bg);
+}
+
+/* フォローボタン：[フォロー中] はマウスを乗せると [フォロー解除] */
+.follow-btn {
+  min-width: 112px;
+}
+
+.follow-btn .when-hover {
+  display: none;
+}
+
+.follow-btn.is-following:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--error-bg);
+}
+
+.follow-btn.is-following:hover .when-normal {
+  display: none;
+}
+
+.follow-btn.is-following:hover .when-hover {
+  display: inline;
+}
+
+/* ---------- フォーム ---------- */
+
+.auth {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 40px 16px;
+}
+
+.auth .logo {
+  display: block;
+  text-align: center;
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.auth h1 {
+  text-align: center;
+  font-size: 18px;
+  margin: 0 0 24px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.input:focus,
+.textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.input-prefix {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding-left: 12px;
+  background: var(--surface);
+}
+
+.input-prefix .input {
+  border: none;
+  padding-left: 2px;
+}
+
+.input-prefix:focus-within {
+  outline: 2px solid var(--primary);
+}
+
+.input-prefix .input:focus {
+  outline: none;
+}
+
+.error {
+  color: var(--error-text);
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+.error:empty {
+  display: none;
+}
+
+.form-error-box {
+  background: var(--error-bg);
+  color: var(--error-text);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.demo-box {
+  margin-top: 24px;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.demo-box code {
+  color: var(--text);
+}
+
+.auth-switch {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.counter {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.counter.over {
+  color: var(--error-text);
+  font-weight: 700;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ---------- タブ ---------- */
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 14px 0 10px;
+  text-decoration: none;
+  color: var(--muted);
+  border-bottom: 4px solid transparent;
+}
+
+.tab:hover {
+  background: var(--hover);
+}
+
+.tab.active {
+  color: var(--text);
+  font-weight: 700;
+  border-bottom-color: var(--primary);
+}
+
+/* ---------- 投稿フォーム ---------- */
+
+.composer .textarea {
+  border: none;
+  font-size: 17px;
+  padding: 4px 0;
+  min-height: 72px;
+}
+
+.composer .textarea:focus {
+  outline: none;
+}
+
+.composer-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 6px;
+}
+
+.composer-bar .spacer {
+  flex: 1;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.icon-btn:not(:disabled):hover {
+  background: var(--hover);
+}
+
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.preview {
+  position: relative;
+  width: 96px;
+  height: 96px;
+}
+
+.preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.preview button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: rgb(0 0 0 / 0.7);
+  color: #fff;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* ---------- 投稿カード ---------- */
+
+.post {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.post:hover {
+  background: var(--hover);
+}
+
+.post.detail {
+  cursor: default;
+}
+
+.post.detail:hover {
+  background: transparent;
+}
+
+.post-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.post-head .spacer {
+  flex: 1;
+}
+
+.user-link {
+  text-decoration: none;
+}
+
+.user-link .name {
+  font-weight: 700;
+}
+
+.user-link .handle {
+  color: var(--muted);
+}
+
+.user-link:hover .name,
+.user-link:focus-visible .name {
+  text-decoration: underline;
+}
+
+.post-time {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.post-body {
+  white-space: pre-wrap;
+  margin: 4px 0 0;
+}
+
+.post.detail .post-body {
+  font-size: 18px;
+}
+
+.post-abs-time {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.post-actions {
+  display: flex;
+  gap: 40px;
+  margin-top: 8px;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 2px 8px 2px 0;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.action .icon {
+  font-size: 17px;
+}
+
+.action:hover {
+  color: var(--primary);
+}
+
+.like-btn:hover,
+.like-btn.liked {
+  color: var(--like);
+}
+
+/* 添付画像：一覧は枚数別のレイアウトで切り抜き表示 */
+.media {
+  display: grid;
+  gap: 2px;
+  margin-top: 10px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
+  background: var(--hover);
+}
+
+.media.n1 {
+  aspect-ratio: 16 / 9;
+}
+
+.media.n2 {
+  grid-template-columns: 1fr 1fr;
+  aspect-ratio: 16 / 9;
+}
+
+.media.n3 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  aspect-ratio: 16 / 9;
+}
+
+.media.n3 img:first-child {
+  grid-row: 1 / 3;
+}
+
+.media.n4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  aspect-ratio: 16 / 9;
+}
+
+.media.n2 img,
+.media.n3 img,
+.media.n4 img {
+  min-height: 0;
+}
+
+/* 投稿詳細：元の縦横比で表示 */
+.media.full {
+  aspect-ratio: auto;
+  align-items: start;
+}
+
+.media.full.multi {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: none;
+}
+
+.media.full img {
+  height: auto;
+  object-fit: contain;
+  grid-row: auto !important;
+}
+
+/* ---------- コメント ---------- */
+
+.comment-form .form-actions {
+  align-items: center;
+  margin-top: 8px;
+}
+
+.comment {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.comments-title {
+  font-size: 15px;
+  margin: 0;
+  padding: 12px 16px 0;
+}
+
+/* ---------- プロフィール ---------- */
+
+.profile-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.profile-head .names {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-name {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.followed-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  font-size: 12px;
+  border-radius: 4px;
+  background: var(--hover);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.profile-bio {
+  white-space: pre-wrap;
+  margin: 10px 0 0;
+}
+
+.profile-since {
+  color: var(--muted);
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
+.profile-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.profile-stats strong {
+  color: var(--text);
+}
+
+/* ---------- ユーザー検索 ---------- */
+
+.search-form {
+  display: flex;
+  gap: 8px;
+}
+
+.search-form .input-prefix {
+  flex: 1;
+  border-radius: 999px;
+  min-width: 0;
+}
+
+.list-title {
+  font-weight: 700;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.user-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.user-row:hover {
+  background: var(--hover);
+}
+
+.user-row .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-row .row-name {
+  font-weight: 700;
+}
+
+.user-row .row-bio {
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.more {
+  padding: 12px 16px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---------- 画像ビューアー ---------- */
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(0 0 0 / 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 56px;
+}
+
+.viewer-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.viewer-close,
+.viewer-nav {
+  position: absolute;
+  border: none;
+  background: rgb(255 255 255 / 0.15);
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.viewer-close:hover,
+.viewer-nav:hover {
+  background: rgb(255 255 255 / 0.3);
+}
+
+.viewer-close {
+  top: 12px;
+  right: 12px;
+}
+
+.viewer-prev {
+  left: 8px;
+}
+
+.viewer-next {
+  right: 8px;
+}
+
+.viewer-count {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  color: #fff;
+}
+
+/* ---------- スマートフォン幅 ---------- */
+
+@media (max-width: 480px) {
+  .header-inner {
+    gap: 8px 12px;
+  }
+
+  .header-me .handle {
+    display: none;
+  }
+
+  .post-actions {
+    gap: 24px;
+  }
+
+  .viewer {
+    padding: 56px 8px;
+  }
+
+  .viewer-nav {
+    top: auto;
+    bottom: 8px;
+  }
+
+  .viewer-prev {
+    left: 16px;
+  }
+
+  .viewer-next {
+    right: 16px;
+  }
+}
