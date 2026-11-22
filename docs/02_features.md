@@ -5,9 +5,9 @@
 | 項目 | 内容 |
 | --- | --- |
 | 文書名 | RaiseTimeline 機能一覧 |
-| 版数 | 2.0 |
+| 版数 | 2.1 |
 | 作成日 | 2026-11-14 |
-| 最終更新日 | 2026-11-15 |
+| 最終更新日 | 2026-11-22 |
 | ステータス | 作成中 |
 | 上位文書 | [要件定義書](01_requirements.md) |
 | 関連文書 | [機能別要件書](features/)、[画面設計](03_screens.md)、[ER図・テーブル定義](04_er_diagram.md) |
@@ -22,6 +22,7 @@
 | 1.1 | 2026-11-14 | フォロー・プロフィール機能を MVP に追加（F-16 を MVP に、F-18〜F-21 を追加） |
 | 1.2 | 2026-11-14 | 本文の上限を 280 文字に変更。画像添付（F-17）を MVP に変更 |
 | 2.0 | 2026-11-15 | 機能の詳細を機能別要件書（features/）へ移し、本書を索引に再構成。ユーザー検索（F-22）・おすすめユーザー（F-23）を追加。ルーティングを画面の URL と API に分けて記載 |
+| 2.1 | 2026-11-22 | F-16・F-18 の概要と `PATCH /api/me/profile` にアイコンを追加 |
 
 ---
 
@@ -63,9 +64,9 @@
 | F-13 | コメント | コメント削除 | 自分のコメントを削除する | SC-04 | [comment](features/comment.md) |
 | F-14 | いいね | いいね / 取り消し | ボタンでいいねをトグルする。押した直後に件数と表示を更新 | SC-03〜SC-05 | [like](features/like.md) |
 | F-15 | いいね | 自分のいいね状態表示 | いいね済みの投稿はハートを塗りつぶしで表示 | SC-03〜SC-05 | [like](features/like.md) |
-| F-16 | ユーザー | プロフィール表示 | ユーザーの情報（表示名・自己紹介・各種件数）と投稿一覧を表示する | SC-05 | [profile](features/profile.md) |
+| F-16 | ユーザー | プロフィール表示 | ユーザーの情報（アイコン・表示名・自己紹介・各種件数）と投稿一覧を表示する | SC-05 | [profile](features/profile.md) |
 | F-17 | 投稿 | 画像添付・表示 | 投稿に画像を最大 4 枚添付する。一覧・詳細で表示し、クリックで拡大表示 | SC-03〜SC-05 | [post](features/post.md) |
-| F-18 | ユーザー | プロフィール編集 | 自分の表示名・自己紹介を変更する | SC-06 | [profile](features/profile.md) |
+| F-18 | ユーザー | プロフィール編集 | 自分のアイコン（設定・削除）・表示名・自己紹介を変更する | SC-06 | [profile](features/profile.md) |
 | F-19 | フォロー | フォロー / 解除 | ボタンで他ユーザーのフォローをトグルする | SC-05, SC-07 | [follow](features/follow.md) |
 | F-20 | フォロー | フォロー数・フォロワー数表示 | プロフィールにフォロー数・フォロワー数を表示する | SC-05 | [follow](features/follow.md) |
 | F-21 | タイムライン | タイムライン切り替え | 「すべて / フォロー中」タブで切り替え。フォロー中はフォローしているユーザー＋自分の投稿 | SC-03 | [timeline](features/timeline.md) |
@@ -129,7 +130,7 @@
 | DELETE | `/api/posts/{id}/like` | いいね取り消し | F-14 |
 | GET | `/api/users/{username}` | プロフィール（件数・フォロー状態を含む） | F-16, F-20 |
 | GET | `/api/users/{username}/posts?before=<投稿 ID>` | プロフィールの投稿一覧（20 件） | F-16 |
-| PATCH | `/api/me/profile` | 自分のプロフィールの更新 | F-18 |
+| PATCH | `/api/me/profile` | 自分のプロフィールの更新（表示名・自己紹介・アイコン、`multipart/form-data`） | F-18 |
 | POST | `/api/users/{username}/follow` | フォロー | F-19 |
 | DELETE | `/api/users/{username}/follow` | フォロー解除 | F-19 |
 | GET | `/api/users/search?q=<検索語>&page=<n>` | ユーザー検索（20 件） | F-22 |

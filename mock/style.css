@@ -911,3 +911,67 @@ textarea {
     right: 16px;
   }
 }
+
+/* ---------- アイコン ---------- */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.avatar-link {
+  display: inline-flex;
+  flex: none;
+  border-radius: 50%;
+  text-decoration: none;
+}
+
+.avatar-link:hover .avatar {
+  filter: brightness(0.9);
+}
+
+.with-avatar {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.post-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.post.detail .post-head {
+  align-items: center;
+}
+
+.header-me-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profile-head {
+  flex-wrap: wrap;
+}
+
+.profile-avatar {
+  flex-basis: 100%;
+}
+
+.avatar-edit {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
