@@ -21,7 +21,8 @@ X（旧 Twitter）のようなテキスト中心のタイムライン型 SNS。�
 | [技術スタック](docs/05_tech_stack.md) | 各層で使用する言語・フレームワーク・周辺ツールの選定と理由 |
 | [インフラ構成（案）](docs/06_infra_design.md) | AWS 上の構成案（ALB + EC2 + RDS + S3）、保留事項 |
 | [開発フロー](docs/07_development_workflow.md) | Issue・ブランチ・PR の運用ルール |
-| API 設計書・データ設計書・フロントエンド設計書 | 作成予定（基本設計） |
+| [API 設計書](docs/08_api_design.md) | API の共通規約（認証の Cookie・CSRF・エラー形式）と各 API の要求・応答。実装した API から追加する |
+| データ設計書・フロントエンド設計書 | 作成予定（基本設計） |
 
 構成は `docs/`（要件定義書・設計書）、`backend/`（Spring Boot。DB アクセスは MyBatis）、`frontend/`（React + Vite）、`compose.yaml`（ローカル開発用 PostgreSQL）。
 

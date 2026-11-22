@@ -25,6 +25,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	// 認証・認可（セッション方式のログイン、BCrypt、CSRF 対策、未ログイン時の 401）。技術スタック 3.
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// JWT（アクセストークン）の発行（JwtEncoder）と検証（JwtDecoder・BearerTokenAuthenticationFilter）。
+	// 署名・検証を自作しないため、Spring Security 標準の Resource Server を使う。技術スタック 3.
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 
 	// DB アクセス（MyBatis）。SQL は src/main/resources/mapper/ の XML に書く。技術スタック 3.
 	// Spring Boot の BOM では版数が管理されないため、ここで指定する。

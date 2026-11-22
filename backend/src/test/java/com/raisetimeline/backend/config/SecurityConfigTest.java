@@ -1,7 +1,7 @@
 package com.raisetimeline.backend.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static com.raisetimeline.backend.CsrfSupport.withToken;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
+
+import com.raisetimeline.backend.CsrfSupport;
 
 /**
  * Spring Security の設定（auth.md F-04）のテスト。
@@ -62,7 +64,7 @@ class SecurityConfigTest {
 	@WithMockUser
 	void CSRFのトークンがあれば403にはならない() {
 		// /api/posts はまだ無いため 404 になる。403 ではないので、CSRF の検査は通過している
-		assertThat(mvc.post().uri("/api/posts").with(csrf()))
+		assertThat(mvc.post().uri("/api/posts").with(withToken(CsrfSupport.fetchToken(mvc))))
 				.hasStatus(HttpStatus.NOT_FOUND);
 	}
 

@@ -43,7 +43,8 @@ Docker Desktop が止まっていて DB を起動できないときは、スキ�
 | [画面設計](../../../docs/03_screens.md) | 画面ごとの要素と動作の表。名前のクリックで SC-05 へ移り、本文のクリックとぶつからない。削除の確認ダイアログ。日時の表示（一覧は相対、詳細は絶対） |
 | [ER図・テーブル定義](../../../docs/04_er_diagram.md) | Flyway のマイグレーションの結果がテーブル定義・制約（`UNIQUE`・`CHECK`・外部キーの `ON DELETE CASCADE`）・索引と一致するか |
 | [技術スタック](../../../docs/05_tech_stack.md) 3.〜6. | **書かれているライブラリが実際に `build.gradle` / `package.json` に入っているか**（選定済みなのに未導入、またはその逆）。版数の記述が実物と合っているか。ポート（5173 / 8080 / 5432） |
-| API 設計書・データ設計書・フロントエンド設計書 | 作成後に、この表へ確認する項目を追加する |
+| [API 設計書](../../../docs/08_api_design.md) | パス・メソッド・ステータスコード・要求と応答の項目名が一致するか。エラーは ProblemDetail で、項目ごとのエラーは `errors: [{field, message}]`。認証の Cookie の名前・属性（`HttpOnly`・`SameSite`・`Path`・期限）が 2.2 のとおりか |
+| データ設計書・フロントエンド設計書 | 作成後に、この表へ確認する項目を追加する |
 
 文書どうしが矛盾しているときは、**決定事項として明記されている方を正** とし、もう一方の文書を直す。文書を直したら版数・最終更新日・変更履歴の 3 つを更新する（CLAUDE.md 5.）。
 
@@ -55,8 +56,10 @@ Docker Desktop が止まっていて DB を起動できないときは、スキ�
 - Service はクラスに `@Transactional(readOnly = true)`、書き込みメソッドだけ `@Transactional` で上書き
 - 要求・応答は `record`。エンティティを直接返さない（`password_digest` などを応答に含めない）
 - Bean Validation は要求 record に付け、DB の制約（`CHECK` / `NOT NULL` / `UNIQUE`）と二重にかける。正規化（strip、空白 → `null`）は検証の **前** に済ませる
+- 文字数の上限・下限は `@Size` ではなく `@CodePointLength`（`common.validation`）で確かめる。`@Size` は絵文字を 2 文字と数え、文書（絵文字も 1 文字）や PostgreSQL の `VARCHAR(n)` と食い違う
 - 権限の確認（削除は作成者本人だけ、プロフィール更新はログインユーザー自身だけ）は Service で行い、画面で隠すだけにしない
 - エラー応答は `ProblemDetail` に統一する
+- 認証（JWT）：アクセストークン・リフレッシュトークンの値を応答の本文・ログに出さない。リフレッシュトークンは DB にハッシュで保存し、更新のたびに作り直す。Cookie は `HttpOnly`。JWT の秘密鍵は本番では環境変数で渡し、ローカル用の値を本番で使わない。サーバーはセッションを作らない（`JSESSIONID` が出ていたら設定の漏れ）
 - `application.properties`：`server.port` は書かない。`mybatis.configuration.map-underscore-to-camel-case=true`（列名 `display_name` → `displayName`）
 - Flyway：適用済みの `V*.sql` は編集しない。定義変更は次の連番で追加
 - 画像の保存先は設定で切り替える（ローカルはディスク、本番は S3）。保存処理はインターフェースの裏に隠し、Service から保存先を意識しない

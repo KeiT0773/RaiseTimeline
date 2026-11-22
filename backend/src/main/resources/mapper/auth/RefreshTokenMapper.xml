@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- refresh_tokens の SQL。パラメーターはすべて #{}（プレースホルダ）で渡す。 -->
+<mapper namespace="com.raisetimeline.backend.auth.token.RefreshTokenMapper">
+
+  <!-- record は setter が無いため、コンストラクターの引数として値を渡す。
+       MyBatis の別名では "long" は Long（ラッパー型）を指すため、プリミティブの long は "_long" と書く -->
+  <resultMap id="storedRefreshToken" type="com.raisetimeline.backend.auth.token.StoredRefreshToken">
+    <constructor>
+      <arg column="user_id" javaType="_long"/>
+      <arg column="expires_at" javaType="java.time.OffsetDateTime"/>
+    </constructor>
+  </resultMap>
+
+  <insert id="insert">
+    INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
+    VALUES (#{userId}, #{tokenHash}, #{expiresAt})
+  </insert>
+
+  <!-- DELETE ... RETURNING は結果の行を返すため select として書く。
+       flushCache="true"：MyBatis が同じ SQL の結果を使い回さないようにする -->
+  <select id="deleteByTokenHashReturning" resultMap="storedRefreshToken" flushCache="true" useCache="false">
+    DELETE FROM refresh_tokens
+    WHERE token_hash = #{tokenHash}
+    RETURNING user_id, expires_at
+  </select>
+
+  <delete id="deleteByTokenHash">
+    DELETE FROM refresh_tokens WHERE token_hash = #{tokenHash}
+  </delete>
+
+  <delete id="deleteExpiredByUserId">
+    DELETE FROM refresh_tokens WHERE user_id = #{userId} AND expires_at &lt;= now()
+  </delete>
+
+</mapper>

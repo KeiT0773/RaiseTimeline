@@ -5,7 +5,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 文書名 | RaiseTimeline 技術スタック |
-| 版数 | 2.0 |
+| 版数 | 2.1 |
 | 作成日 | 2026-11-15 |
 | 最終更新日 | 2026-11-22 |
 | ステータス | 作成中 |
@@ -22,6 +22,7 @@
 | --- | --- | --- |
 | 1.0 | 2026-11-15 | 初版作成。TaskManagement と同じ React + Spring Boot + PostgreSQL の構成とし、本プロジェクトで新たに必要なもの（認証、画像の保存、画面の切り替え）を追加 |
 | 2.0 | 2026-11-22 | DB アクセスを Spring Data JPA から MyBatis に変更。雛形の作成に合わせて、各技術の版数を目安から導入した版に確定 |
+| 2.1 | 2026-11-22 | ログイン状態をセッションから JWT（HttpOnly Cookie）に変更。3. の「認証・認可」を書き換え、「JWT の発行・検証」を追加。8. No.2（セッションの保存先）を不要として削除 |
 
 ---
 
@@ -57,7 +58,8 @@ TaskManagement と同じ技術を使い、同じ技術でより複雑なアプ�
 | フレームワーク | Spring Boot 4.1.3 | プロジェクト方針として指定。雛形は Spring Initializr で作成した。4.2 系が出ているが、MyBatis の Spring Boot 対応版（4.1.0）が 4.1 向けのため 4.1 系にそろえる |
 | ビルドツール | Gradle 9.9.2（Gradle Wrapper） | ソースのコンパイル、依存ライブラリの取得、実行ファイルの作成を行う。Wrapper を同梱するため Gradle 本体のインストールは不要 |
 | REST API | Spring Web | フロントエンドからの HTTP 要求を受け付け、JSON で応答する。画像のアップロードは `multipart/form-data` で受け取る（Spring Web の標準機能） |
-| 認証・認可 | **Spring Security**（7.1 系） | セッション（Cookie）方式のログイン、パスワードのハッシュ化（BCrypt。`BCryptPasswordEncoder`）、CSRF 対策、未ログイン時のアクセス拒否（F-04）を担う。要件定義書 非機能要件の「セキュリティ」「認証」を、自作せずにフレームワークの標準機能で満たすため。Spring Boot のスターター（`spring-boot-starter-security`）で入る |
+| 認証・認可 | **Spring Security**（7.1 系） | パスワードのハッシュ化（BCrypt。`BCryptPasswordEncoder`）、ログイン時のパスワード照合（`AuthenticationManager`）、CSRF 対策（`csrf.spa()`）、未ログイン時のアクセス拒否（F-04）を担う。要件定義書 非機能要件の「セキュリティ」「認証」を、自作せずにフレームワークの標準機能で満たすため。Spring Boot のスターター（`spring-boot-starter-security`）で入る |
+| JWT の発行・検証 | **Spring Security OAuth2 Resource Server**（`spring-boot-starter-oauth2-resource-server`。内部で Nimbus JOSE + JWT を使う） | ログイン状態はサーバーのセッションではなく JWT で持つ（[auth](features/auth.md) 3.）。アクセストークン（JWT、15 分）の署名（HS256）と発行に `JwtEncoder`、要求ごとの検証に `JwtDecoder` と `BearerTokenAuthenticationFilter` を使う。署名・検証を自作しないため。トークンは HttpOnly の Cookie で受け渡す。リフレッシュトークン（14 日）は JWT ではなくランダムな値で、DB（refresh_tokens）にハッシュで保存する。サーバーがセッションを持たないので、サーバーを複数台にしてもログイン状態の共有は要らない |
 | DB アクセス | **MyBatis**（`mybatis-spring-boot-starter` 4.1.0。MyBatis 3.5 系） | SQL を `src/main/resources/mapper/` の XML に直接書き、Java 側は `@Mapper` のインターフェースだけを置く。件数の集計・フォロー中タイムライン・ユーザー検索のように JOIN やサブクエリを使う SQL（[ER図・テーブル定義](04_er_diagram.md) 3.）をほぼそのまま書け、どの SQL が実行されるかがコードから読み取れるため。1 ページ分をまとめて取る SQL を書き、N+1 を避ける。パラメーターは `#{}`（プレースホルダ）で渡し、`${}`（文字列の埋め込み）は使わない（SQL インジェクション対策）。Spring Boot の BOM では版数が管理されないため `build.gradle` で指定する |
 | 入力チェック | Bean Validation | 「投稿は 0〜280 文字」「ユーザー名は英数字とアンダースコアで 3〜15 文字」などの検証をアノテーションで宣言する |
 | DB マイグレーション | Flyway 12.4 | テーブル定義の変更を SQL ファイルとして履歴管理し、アプリ起動時に自動で DB へ反映する。Spring Boot 4 では `spring-boot-starter-flyway` と `flyway-database-postgresql` を依存に加える（TaskManagement で確認済み） |
@@ -142,6 +144,5 @@ RaiseTimeline/
 | No | 事項 | 現時点の考え | 決める時期 |
 | --- | --- | --- | --- |
 | 1 | 画像の処理（EXIF の除去・サムネイルの作成）に使うライブラリ | Java 標準の `ImageIO` で読み込んで書き出し直すと EXIF は消える。縮小は Thumbnailator、WebP の読み込みは TwelveMonkeys ImageIO を候補とする。`ImageIO` は WebP の書き出しに対応していないため、WebP は JPEG に変換して保存する案が有力 | 投稿機能（F-17）の実装前 |
-| 2 | ログイン状態（セッション）の保存先 | EC2 が 1 台ならアプリのメモリ（Spring の標準）でよい。複数台にする場合は、どのサーバーに要求が届いてもログイン状態を引き継げるよう Spring Session JDBC（DB に保存）にする | インフラの EC2 の台数を決めるとき（[インフラ構成（案）](06_infra_design.md) 7.） |
-| 3 | 画像の表示方法 | S3 を非公開にし、バックエンドが発行する署名付き URL（期限つきの URL）で表示する案。CloudFront を置く場合は CloudFront 経由で配信する案もある | インフラの構成を決めるとき |
-| 4 | 本番の配置先 | AWS でサーバーを構築するかは未決定。構築する場合の案は [インフラ構成（案）](06_infra_design.md) | ローカルでの実装が一通り終わったあと |
+| 2 | 画像の表示方法 | S3 を非公開にし、バックエンドが発行する署名付き URL（期限つきの URL）で表示する案。CloudFront を置く場合は CloudFront 経由で配信する案もある | インフラの構成を決めるとき |
+| 3 | 本番の配置先 | AWS でサーバーを構築するかは未決定。構築する場合の案は [インフラ構成（案）](06_infra_design.md) | ローカルでの実装が一通り終わったあと |

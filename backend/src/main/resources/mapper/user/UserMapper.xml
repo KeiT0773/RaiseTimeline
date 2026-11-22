@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- users の SQL。パラメーターはすべて #{}（プレースホルダ）で渡す。 -->
+<mapper namespace="com.raisetimeline.backend.user.UserMapper">
+
+  <sql id="columns">
+    id, username, display_name, email, password_digest, bio, avatar_path, created_at, updated_at
+  </sql>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    INSERT INTO users (username, display_name, email, password_digest)
+    VALUES (#{username}, #{displayName}, #{email}, #{passwordDigest})
+  </insert>
+
+  <select id="existsByUsernameIgnoreCase" resultType="boolean">
+    SELECT EXISTS (SELECT 1 FROM users WHERE lower(username) = lower(#{username}))
+  </select>
+
+  <select id="existsByEmail" resultType="boolean">
+    SELECT EXISTS (SELECT 1 FROM users WHERE email = #{email})
+  </select>
+
+  <select id="findByEmail" resultType="com.raisetimeline.backend.user.User">
+    SELECT <include refid="columns"/> FROM users WHERE email = #{email}
+  </select>
+
+  <select id="findById" resultType="com.raisetimeline.backend.user.User">
+    SELECT <include refid="columns"/> FROM users WHERE id = #{id}
+  </select>
+
+</mapper>
